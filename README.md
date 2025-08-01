@@ -1,5 +1,5 @@
 # 🎬 VISOR - Puntuación de Series y Películas
-
+https://ramonmendoza13.github.io/VisorReact/ 
 
 Una aplicación web moderna para descubrir y explorar películas y series con puntuaciones detalladas, desarrollada con React y Tailwind CSS.
 
@@ -24,7 +24,7 @@ Una aplicación web moderna para descubrir y explorar películas y series con pu
 
 1. **Clona el repositorio**
    ```bash
-   git clone https://github.com/ramonmendoza13/visor.git
+   git clone https://github.com/ramonmendoza13/VisorReact.git
    cd visor
    ```
 
