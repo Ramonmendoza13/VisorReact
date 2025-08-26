@@ -1,6 +1,10 @@
 // Importo los componentes necesarios de react-router-dom y useState de React
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { FaUser } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext"; // importar el hook
+
+
 
 function HeaderComponent() {
     // Estado para guardar el texto introducido en el input
@@ -15,6 +19,9 @@ function HeaderComponent() {
             navigate(`/buscar/${encodeURIComponent(titulo)}`);
         }
     };
+
+    const { token, login, user } = useAuth();  // usar el hook para obtener token, login y user
+
 
     return (
         // Header principal con fondo degradado y sombra
@@ -48,6 +55,25 @@ function HeaderComponent() {
                     >
                         Buscar
                     </button>
+
+                    {!token ? (
+                        <Link
+                            to="/login"
+                            className="bg-yellow-400 hover:bg-white text-blue-900 hover:text-yellow-400 font-bold px-5 py-2 rounded-xl shadow-md transition-all duration-200 whitespace-nowrap flex items-center gap-2"
+                        >
+                            <FaUser className="text-lg" />
+                            <span className="hidden sm:inline">Login</span>
+                        </Link>
+                    ) : (
+                        <Link
+                            to="/zonaPrivada"
+                            className="bg-green-500 hover:bg-green-600 text-white font-bold px-5 py-2 rounded-xl shadow-md transition-all duration-200 whitespace-nowrap flex items-center gap-2"
+                        >
+                            <FaUser className="text-lg" />
+                            <span className="hidden sm:inline">Zona Privada</span>
+                        </Link>
+                    )}
+
                 </div>
             </nav>
         </header>

@@ -6,7 +6,9 @@ const config = {
   API_KEY: import.meta.env.VITE_API_KEY || "e9edaa4ea93296612b734f715a494df4",
   API_BASE_URL: "https://api.themoviedb.org/3",
   IMAGE_BASE_URL: "https://image.tmdb.org/t/p",
-  
+
+  API_VISOR_URL: "https://visorapi.onrender.com/api",
+
   // Configuración de idioma
   LANGUAGE: "es-ES",
   

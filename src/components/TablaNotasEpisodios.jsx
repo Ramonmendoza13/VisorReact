@@ -2,6 +2,8 @@ import axios from "axios";
 import { useState, useEffect, use } from "react";
 import getNotaColor from "../utils/notaColors"; // Importamos la función para obtener el color de la nota
 import config from "../config/config"; // Importamos la configuración
+import loadingGif from '../assets/loading.gif'; // ← Ruta correcta desde src/assets
+
 
 function TablaNotasEpisodios({ tvId, totalTemporadas }) {
 
@@ -43,14 +45,13 @@ function TablaNotasEpisodios({ tvId, totalTemporadas }) {
     obtenerNotas();
   }, [tvId, totalTemporadas]);
 
-  console.log(temporadasConNotas);
 
   // Mostrar loading mientras cargan las temporadas
   if (cargando) {
     return (
       <div className="mt-8 flex flex-col items-center justify-center py-8">
         <img 
-          src="/loading.gif" 
+          src={loadingGif} 
           alt="Cargando..."
           className="w-16 h-16 mb-4"
         />
