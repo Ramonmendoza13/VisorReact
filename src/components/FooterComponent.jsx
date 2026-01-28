@@ -61,7 +61,7 @@ function FooterComponent() {
         {/* Línea divisoria */}
         <div className="border-t border-gray-700 mt-6 pt-4">
           <p className="text-center text-sm text-gray-400">
-            Desarrollado usando React y Tailwind CSS
+            Desarrollado usando React, Tailwind CSS y API en Laravel
           </p>
         </div>
       </div>

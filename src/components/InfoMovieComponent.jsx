@@ -101,7 +101,7 @@ function InfoMovieComponent({ title, id }) {
   const anadir = async () => {
     try {
       const response = await axios.post(
-        `${config.API_VISOR_URL}/watchlists/`,
+        `${config.API_VISOR_URL}/watchlists`,
         {
           imdb_id: id,
           title: title,

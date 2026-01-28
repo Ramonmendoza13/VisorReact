@@ -6,6 +6,7 @@ import config from "../config/config"; // Importamos la configuración
 import loadingGif from '../assets/loading.gif'; // ← Ruta correcta desde src/assets
 import { Bookmark, BookmarkCheck } from "lucide-react"; // Iconos
 import { useAuth } from '../context/AuthContext.jsx'
+import { useNavigate } from 'react-router-dom'; // ← Añadir este import
 
 
 function InfoTvComponent({ title, id }) {
@@ -18,6 +19,7 @@ function InfoTvComponent({ title, id }) {
   const [guardado, setGuardado] = useState();
   // 
   const { token } = useAuth()
+  const navigate = useNavigate(); // ← Añadir este hook
 
 
 
@@ -99,7 +101,7 @@ function InfoTvComponent({ title, id }) {
   const anadir = async () => {
     try {
       const response = await axios.post(
-        `${config.API_VISOR_URL}/watchlists/`,
+        `${config.API_VISOR_URL}/watchlists`,
         {
           imdb_id: id,
           title: title,
@@ -193,13 +195,19 @@ function InfoTvComponent({ title, id }) {
             {/* Icono guardado */}
             <button
               onClick={handleClick}
-              className="p-2 rounded-full hover:bg-gray-800 transition"
+              className="flex items-center gap-2 py-2 px-4 lg:p-2 lg:w-auto w-fit rounded-lg lg:rounded-full bg-gray-800 hover:bg-gray-700 lg:bg-transparent lg:hover:bg-gray-800 transition-all duration-200 self-start"
               title={guardado ? "Quitar de guardados" : "Guardar"}
             >
               {guardado ? (
-                <BookmarkCheck className="w-6 h-6 text-green-400" />
+                <>
+                  <BookmarkCheck className="w-5 h-5 lg:w-6 lg:h-6 text-green-400" />
+                  <span className="text-green-400 font-medium text-sm lg:hidden"></span>
+                </>
               ) : (
-                <Bookmark className="w-6 h-6 text-gray-400" />
+                <>
+                  <Bookmark className="w-5 h-5 lg:w-6 lg:h-6 text-gray-400" />
+                  <span className="text-gray-400 font-medium text-sm lg:hidden"></span>
+                </>
               )}
             </button>
           </div>
