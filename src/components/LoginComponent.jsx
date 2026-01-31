@@ -22,10 +22,12 @@ export default function Login() {
             });
 
             const data = await res.json();
-            setRespuesta(JSON.stringify(data));
 
             if (res.ok && data.token) {
                 login(data.user, data.token);
+            } else {
+                // Solo mostrar el mensaje, no todo el JSON
+                setRespuesta(data.mensaje);
             }
         } catch (error) {
             console.error("Error en la petición:", error);
@@ -48,9 +50,8 @@ export default function Login() {
                 </div>
 
                 {respuesta && (
-                    <div className="mt-6 p-4 bg-gray-700 border border-gray-600 rounded-lg">
-                        <h3 className="font-semibold mb-2 text-gray-300">Respuesta de la API:</h3>
-                        <pre className="text-sm text-gray-400 whitespace-pre-wrap overflow-x-auto">
+                    <div className="mt-6 p-4 bg-gray-700 border border-gray-600 rounded-lg bg-red-300">
+                        <pre className="text-sm text-white-400 whitespace-pre-wrap overflow-x-auto ">
                             {respuesta}
                         </pre>
                     </div>
