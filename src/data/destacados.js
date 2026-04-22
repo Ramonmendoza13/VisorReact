@@ -9,7 +9,7 @@ const destacados = [
     {
         id: 1396,
         title: "Breaking Bad",
-        image: "https://upload.wikimedia.org/wikipedia/pt/thumb/e/e1/Breaking_bad_5_temporada_%28parte_1%29_poster.jpg/300px-Breaking_bad_5_temporada_%28parte_1%29_poster.jpg",
+        image: "https://m.media-amazon.com/images/M/MV5BMzU5ZGYzNmQtMTdhYy00OGRiLTg0NmQtYjVjNzliZTg1ZGE4XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
         type: "tv"
     },
     {
