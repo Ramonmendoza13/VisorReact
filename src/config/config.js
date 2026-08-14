@@ -9,7 +9,12 @@ const config = {
 
   API_VISOR_URL: "https://visorapi.onrender.com/api",
 
-  // Configuración de idioma
+  // API de OMDb (calificaciones de IMDb)
+  OMDB_API_KEY: import.meta.env.VITE_OMDB_API_KEY || "d7f53ca4",
+  OMDB_BASE_URL: "https://www.omdbapi.com",
+
+  // Configuración de región e idioma
+  WATCH_REGION: import.meta.env.VITE_WATCH_REGION || "ES",
   LANGUAGE: "es-ES",
   
   // URLs de placeholder para imágenes

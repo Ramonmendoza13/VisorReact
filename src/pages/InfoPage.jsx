@@ -1,8 +1,6 @@
-import { useEffect, useContext } from "react";
-import { useParams } from "react-router-dom"
+import { useParams } from "react-router-dom";
 import HeaderComponent from "../components/HeaderComponent";
-import InfoTvComponent from "../components/InfoTvComponent";
-import InfoComponent from "../components/infoComponent";
+import InfoComponent from "../components/InfoComponent";
 import FooterComponent from "../components/FooterComponent";
 
 

@@ -1,103 +1,96 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import TablaNotasEpisodios from "./TablaNotasEpisodios";
-import getNotaColor from "../utils/notaColors"; // Importamos la función para obtener el color de la nota
-import config from "../config/config"; // Importamos la configuración
-import loadingGif from '../assets/loading.gif'; // ← Ruta correcta desde src/assets
-import { Bookmark, BookmarkCheck } from "lucide-react"; // Iconos
-import { useAuth } from '../context/AuthContext.jsx'
-import { useNavigate } from 'react-router-dom'; // ← Añadir este import
-
+import WatchProvidersComponent from "./WatchProvidersComponent";
+import config from "../config/config";
+import getNotaColor from "../utils/notaColors";
+import loadingGif from "../assets/loading.gif";
+import { fetchSeriesImdbId, fetchImdbRating } from "../utils/imdb";
+import { Bookmark, BookmarkCheck, Layers, ChevronDown, ChevronUp } from "lucide-react";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 function InfoTvComponent({ title, id }) {
-
-  //resultados de la búsqueda
-  const [resultados, setResultados] = useState([]);
-  // Estado para el loading
+  const [resultados, setResultados] = useState(null);
+  const [nota, setNota] = useState(null);
+  const [seriesImdbId, setSeriesImdbId] = useState(null);
   const [cargando, setCargando] = useState(true);
-  // Estado para saber si está guardado
-  const [guardado, setGuardado] = useState();
-  // 
-  const { token } = useAuth()
-  const navigate = useNavigate(); // ← Añadir este hook
+  const [guardado, setGuardado] = useState(false);
+  const [mostrarSinopsis, setMostrarSinopsis] = useState(false);
+  const { token } = useAuth();
+  const navigate = useNavigate();
 
-
-
-  //Buscar el name el la API o en el estado global con AXIOS
   useEffect(() => {
     const buscar = async () => {
       setCargando(true);
-      const response = await axios.get(`${config.API_BASE_URL}/tv/${id}`, {
-        params: {
-          api_key: config.API_KEY,
-          language: config.LANGUAGE,
-        },
-      });
-      setResultados(response.data);
-      setCargando(false);
+      try {
+        const response = await axios.get(`${config.API_BASE_URL}/tv/${id}`, {
+          params: {
+            api_key: config.API_KEY,
+            language: config.LANGUAGE,
+          },
+        });
+        const tvData = response.data;
+        setResultados(tvData);
+
+        const imdbId = await fetchSeriesImdbId(id);
+        setSeriesImdbId(imdbId);
+
+        if (imdbId) {
+          const ratingImdb = await fetchImdbRating(imdbId);
+          if (ratingImdb !== null) {
+            setNota(ratingImdb);
+          } else if (tvData.vote_average) {
+            setNota(parseFloat(tvData.vote_average.toFixed(1)));
+          }
+        } else if (tvData.vote_average) {
+          setNota(parseFloat(tvData.vote_average.toFixed(1)));
+        }
+      } catch (error) {
+        console.error("Error al obtener información de la serie:", error);
+      } finally {
+        setCargando(false);
+      }
     };
     buscar();
   }, [id]);
 
-  // Busca si la serie esta guardada en la WatchList de usuario
-  // Busca si la película está guardada en la WatchList de usuario
-  if (token) {
-    useEffect(() => {
-      if (!token) return;
+  useEffect(() => {
+    if (!token) return;
 
-      const verificarGuardado = async () => {
-        try {
-          const response = await axios.get(
-            `${config.API_VISOR_URL}/watchlists/tv/${id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+    const verificarGuardado = async () => {
+      try {
+        const response = await axios.get(
+          `${config.API_VISOR_URL}/watchlists/tv/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-          if (response.status === 200) {
-            setGuardado(true);
-          }
-        } catch (error) {
-          if (error.response?.status === 404) {
-            // No está en watchlist → estado falso
-            setGuardado(false);
-          } else {
-            console.error("Error al verificar watchlist:", error);
-          }
+        if (response.status === 200) {
+          setGuardado(true);
         }
-      };
+      } catch (error) {
+        if (error.response?.status === 404) {
+          setGuardado(false);
+        } else {
+          console.error("Error al verificar watchlist:", error);
+        }
+      }
+    };
 
-      verificarGuardado();
-    }, [id, token]);
+    verificarGuardado();
+  }, [id, token]);
 
-
-  }
-
-  // Función para formatear fechas en formato año
   const formatearFechas = (inicio, fin) => {
-    if (!inicio || !fin) return "";
+    if (!inicio) return "";
     const añoInicio = new Date(inicio).getFullYear();
-    const añoFin = new Date(fin).getFullYear();
+    const añoFin = fin ? new Date(fin).getFullYear() : "Presente";
     return `${añoInicio} - ${añoFin}`;
   };
 
-  // Mostrar loading mientras carga
-  if (cargando) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8">
-        <img
-          src={loadingGif}
-          alt="Cargando..."
-          className="w-16 h-16 mb-4"
-        />
-        <p className="text-white text-lg">Cargando información de la serie...</p>
-      </div>
-    );
-  }
-
-  // Funciones que quieres llamar
   const anadir = async () => {
     try {
       const response = await axios.post(
@@ -116,11 +109,10 @@ function InfoTvComponent({ title, id }) {
       );
 
       if (response.status === 201) {
-        console.log("Película añadida a guardados:", id);
         setGuardado(true);
       }
     } catch (error) {
-      console.error("Error al añadir película:", error);
+      console.error("Error al añadir serie:", error);
     }
   };
 
@@ -136,22 +128,16 @@ function InfoTvComponent({ title, id }) {
       );
 
       if (response.status === 200) {
-        console.log("Película eliminada de guardados:", id);
         setGuardado(false);
       }
     } catch (error) {
-      console.error("Error al eliminar película:", error);
+      console.error("Error al eliminar serie:", error);
     }
-  };
-
-
-  const redLogin = () => {
-    navigate("/login");
   };
 
   const handleClick = () => {
     if (!token) {
-      redLogin();
+      navigate("/login");
       return;
     }
 
@@ -162,77 +148,152 @@ function InfoTvComponent({ title, id }) {
     }
   };
 
+  if (cargando || !resultados) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <img
+          src={loadingGif}
+          alt="Cargando..."
+          className="w-16 h-16 mb-4"
+        />
+        <p className="text-gray-300 text-lg font-medium">
+          Cargando detalles de la serie...
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-900 text-white rounded-lg shadow-2xl">
-      <div className="flex flex-row gap-4 lg:gap-8">
-        {/* Imagen del poster - más pequeña en móvil */}
-        <div className="w-24 h-36 lg:w-1/3 lg:h-auto flex-shrink-0">
-          <img
-            src={`${config.IMAGE_BASE_URL}/w500${resultados.poster_path}`}
-            alt={resultados.name}
-            className="w-full h-full rounded-lg shadow-lg object-cover"
-            onError={(e) => {
-              e.target.src = config.PLACEHOLDER_IMAGE;
-            }}
-          />
-        </div>
+    <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-2.5 sm:py-6 space-y-3 sm:space-y-4">
+      
+      {/* 1º CABECERA COMPACTA DE LA SERIE: Póster al lado de la info en móvil y desktop */}
+      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gray-900 border border-white/10 shadow-xl">
+        {/* Backdrop sutil */}
+        {resultados.backdrop_path && (
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <img
+              src={`${config.IMAGE_BASE_URL}/original${resultados.backdrop_path}`}
+              alt=""
+              className="w-full h-full object-cover opacity-15 filter blur-sm scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/95 to-transparent" />
+          </div>
+        )}
 
-        {/* Información de la serie - a la derecha de la imagen */}
-        <div className="flex-1 space-y-3 lg:space-y-6">
-          {/* Título y fechas en la misma línea */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 lg:gap-4">
-            <h1 className="text-xl lg:text-4xl font-bold text-yellow-400">
-              {resultados.name}
-            </h1>
+        <div className="relative z-10 p-3 sm:p-5 flex flex-row gap-3 sm:gap-5 items-start">
+          {/* Póster siempre al lado (no arriba) */}
+          <div className="w-20 sm:w-28 lg:w-32 flex-shrink-0 rounded-xl overflow-hidden shadow-xl border border-white/10 bg-gray-950">
+            <img
+              src={`${config.IMAGE_BASE_URL}/w500${resultados.poster_path}`}
+              alt={resultados.name}
+              className="w-full h-auto object-cover aspect-[2/3]"
+              onError={(e) => {
+                e.target.src = config.PLACEHOLDER_IMAGE;
+              }}
+            />
+          </div>
 
-            {/* Fechas de inicio y fin al lado del título */}
-            {resultados.first_air_date && resultados.last_air_date && (
-              <span className="text-gray-300 text-sm lg:text-lg font-medium">
-                ({formatearFechas(resultados.first_air_date, resultados.last_air_date)})
-              </span>
-            )}
+          {/* Info Principal + Dónde Ver integrado al lado */}
+          <div className="flex-1 space-y-2 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-blue-600 text-white px-1.5 py-0.2 rounded shadow">
+                    Serie
+                  </span>
+                  {resultados.first_air_date && (
+                    <span className="text-[11px] sm:text-xs text-gray-400 font-semibold">
+                      {formatearFechas(resultados.first_air_date, resultados.last_air_date)}
+                    </span>
+                  )}
+                </div>
 
-            {/* Icono guardado */}
-            <button
-              onClick={handleClick}
-              className="flex items-center gap-2 py-2 px-4 lg:p-2 lg:w-auto w-fit rounded-lg lg:rounded-full bg-gray-800 hover:bg-gray-700 lg:bg-transparent lg:hover:bg-gray-800 transition-all duration-200 self-start"
-              title={guardado ? "Quitar de guardados" : "Guardar"}
-            >
-              {guardado ? (
-                <>
-                  <BookmarkCheck className="w-5 h-5 lg:w-6 lg:h-6 text-green-400" />
-                  <span className="text-green-400 font-medium text-sm lg:hidden"></span>
-                </>
-              ) : (
-                <>
-                  <Bookmark className="w-5 h-5 lg:w-6 lg:h-6 text-gray-400" />
-                  <span className="text-gray-400 font-medium text-sm lg:hidden"></span>
-                </>
+                <h1 className="text-base sm:text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight truncate sm:whitespace-normal">
+                  {resultados.name}
+                </h1>
+              </div>
+
+              {/* Botón Favorito */}
+              <button
+                onClick={handleClick}
+                className={`flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl font-bold text-xs transition-all duration-200 flex-shrink-0 shadow-md ${
+                  guardado
+                    ? "bg-green-500/20 text-green-400 border border-green-500/40 hover:bg-green-500/30"
+                    : "bg-gray-800/90 hover:bg-gray-700 text-gray-200 border border-white/10 hover:border-yellow-400/40"
+                }`}
+              >
+                {guardado ? (
+                  <>
+                    <BookmarkCheck className="w-3.5 h-3.5 text-green-400" />
+                    <span className="hidden sm:inline">Guardada</span>
+                  </>
+                ) : (
+                  <>
+                    <Bookmark className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="hidden sm:inline">Guardar</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Badges de Calificación y Temporadas */}
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-1 bg-gray-950/85 border border-yellow-400/30 px-2 py-0.5 rounded-lg shadow">
+                <span className="bg-yellow-400 text-gray-950 font-black text-[9px] sm:text-[10px] px-1 py-0.2 rounded">
+                  IMDb
+                </span>
+                <span className={`text-xs sm:text-sm font-black px-1 py-0.2 rounded text-white ${getNotaColor(nota)}`}>
+                  {nota !== null ? nota.toFixed(1) : "N/A"}
+                </span>
+                <span className="text-[10px] text-gray-400">/ 10</span>
+              </div>
+
+              {resultados.number_of_seasons > 0 && (
+                <div className="flex items-center gap-1 bg-gray-800/80 border border-white/10 px-2 py-0.5 rounded-lg text-[11px] sm:text-xs font-semibold text-gray-300">
+                  <Layers className="w-3 h-3 text-blue-400" />
+                  <span>{resultados.number_of_seasons} Temporadas</span>
+                </div>
               )}
-            </button>
-          </div>
+            </div>
 
-          {/* Nota con color de fondo */}
-          <div className="flex items-center gap-2 lg:gap-3">
-            <span className="text-gray-300 text-sm lg:text-lg">Calificación:</span>
-            <span className={`px-2 lg:px-4 py-1 lg:py-2 rounded-full text-white font-bold text-sm lg:text-lg ${getNotaColor(resultados.vote_average)}`}>
-              {resultados.vote_average?.toFixed(1) || "N/A"}
-            </span>
-            <span className="text-gray-400 text-sm lg:text-lg">/10</span>
-          </div>
-
-          {/* Descripción */}
-          <div className="bg-gray-800 p-3 lg:p-6 rounded-lg border border-gray-700">
-            <h3 className="text-lg lg:text-xl font-semibold text-yellow-400 mb-2 lg:mb-3">Descripción</h3>
-            <p className="text-gray-300 leading-relaxed text-justify text-sm lg:text-base">
-              {resultados.overview || 'No hay descripción disponible.'}
-            </p>
+            {/* 2º DÓNDE VER: EN FORMATO COMPACTO DIRECTO */}
+            <WatchProvidersComponent type="tv" id={id} compact={true} />
           </div>
         </div>
       </div>
-      <TablaNotasEpisodios tvId={resultados.id} totalTemporadas={resultados.number_of_seasons} />
+
+      {/* 3º LA MATRIZ DE PUNTUACIONES EN POSICIÓN PROTAGONISTA */}
+      <TablaNotasEpisodios
+        tvId={resultados.id}
+        seriesImdbId={seriesImdbId}
+        totalTemporadas={resultados.number_of_seasons}
+      />
+
+      {/* 4º SINOPSIS Y DETALLES EXTENDIDOS (COLAPSABLE / SECUNDARIO) */}
+      {resultados.overview && (
+        <div className="bg-gray-900/70 border border-white/5 rounded-2xl p-3.5 transition">
+          <button
+            onClick={() => setMostrarSinopsis(!mostrarSinopsis)}
+            className="flex items-center justify-between w-full text-left text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white transition"
+          >
+            <span>Sinopsis de la Serie</span>
+            {mostrarSinopsis ? (
+              <ChevronUp className="w-4 h-4 text-yellow-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
+
+          {mostrarSinopsis && (
+            <p className="text-gray-300 text-xs sm:text-sm leading-relaxed mt-2 pt-2 border-t border-white/5 text-justify animate-in fade-in duration-200">
+              {resultados.overview}
+            </p>
+          )}
+        </div>
+      )}
+
     </div>
-  )
+  );
 }
 
-export default InfoTvComponent
+export default InfoTvComponent;
